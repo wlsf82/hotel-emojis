@@ -480,10 +480,6 @@ export default function App() {
           <>
             <div className="hud">
               <div className="stat">
-                <span>Points</span>
-                <strong>{points}</strong>
-              </div>
-              <div className="stat">
                 <span>Time</span>
                 <strong>{formatHMS(elapsedSeconds)}</strong>
               </div>
