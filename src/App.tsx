@@ -327,24 +327,30 @@ export default function App() {
     if (gameOver) return
     if (view !== 'game') return
 
-    const pickedNow = grid[id]?.active
-    if (pickedNow && pickedNow.kind !== 'bomb') {
-      spawnEmojiFireworks(pickedNow.emoji, windowElsRef.current.get(id) ?? null)
+    const picked = grid[id]?.active
+    if (!picked) return
+
+    if (picked.kind === 'bomb') {
+      setGameOver(true)
+      setGrid((prev) => {
+        const cell = prev[id]
+        if (!cell?.active || cell.active.kind !== 'bomb') return prev
+        const next = prev.slice()
+        next[id] = { ...next[id], active: null, expiresAt: 0 }
+        return next
+      })
+      return
     }
+
+    spawnEmojiFireworks(picked.emoji, windowElsRef.current.get(id) ?? null)
+    setPoints((p) => p + windowDelta(picked, theme))
 
     setGrid((prev) => {
       const cell = prev[id]
       if (!cell?.active) return prev
 
-      const picked = cell.active
-
-      if (picked.kind === 'bomb') {
-        setGameOver(true)
-        return prev.map((c) => (c.id === id ? { ...c, active: null, expiresAt: 0 } : c))
-      }
-
-      const delta = windowDelta(picked, theme)
-      setPoints((p) => p + delta)
+      // If it changed between the click and this update, don't clear it.
+      if (cell.active.emoji !== picked.emoji || cell.active.points !== picked.points) return prev
 
       const next = prev.slice()
       next[id] = { ...next[id], active: null, expiresAt: 0 }
