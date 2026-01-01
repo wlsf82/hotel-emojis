@@ -1,0 +1,361 @@
+:root {
+  color-scheme: light dark;
+  --bg: #0b1220;
+  --text: #e5e7eb;
+  --card-bg: rgba(29, 39, 59, 0.8);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --overlay-bg: rgba(0, 0, 0, 0.55);
+  --modal-bg: rgba(17, 24, 39, 0.95);
+  --modal-border: rgba(255, 255, 255, 0.10);
+  --panel-bg: rgba(0, 0, 0, 0.25);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --building-top: #111827;
+  --building-bottom: #0f172a;
+  --window-bg: rgba(3, 7, 18, 0.6);
+  --window-border: rgba(255, 255, 255, 0.10);
+  --door-bg: rgba(3, 7, 18, 0.55);
+  --door-border: rgba(255, 255, 255, 0.12);
+  --btn-bg: rgba(59, 130, 246, 0.25);
+  --btn-bg-hover: rgba(59, 130, 246, 0.33);
+  --btn-border: rgba(255, 255, 255, 0.14);
+
+  --win-size: clamp(40px, 8svh, 60px);
+  --win-gap: clamp(10px, 1.6svh, 14px);
+
+  --sun-opacity: 0;
+  --moon-opacity: 1;
+  --sun-scale: 0.92;
+  --moon-scale: 1;
+  --sun-color: #fbbf24;
+  --moon-color: #c7d2fe;
+  --sky-border: rgba(255, 255, 255, 0.14);
+}
+
+body[data-theme='day'] {
+  --bg: #f8fafc;
+  --text: #0f172a;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(15, 23, 42, 0.10);
+  --overlay-bg: rgba(15, 23, 42, 0.22);
+  --modal-bg: rgba(255, 255, 255, 0.92);
+  --modal-border: rgba(15, 23, 42, 0.14);
+  --panel-bg: rgba(15, 23, 42, 0.06);
+  --panel-border: rgba(15, 23, 42, 0.12);
+  --building-top: #e2e8f0;
+  --building-bottom: #cbd5e1;
+  --window-bg: rgba(255, 255, 255, 0.65);
+  --window-border: rgba(15, 23, 42, 0.18);
+  --door-bg: rgba(255, 255, 255, 0.75);
+  --door-border: rgba(15, 23, 42, 0.22);
+
+  --sun-opacity: 1;
+  --moon-opacity: 0;
+  --sun-scale: 1;
+  --moon-scale: 0.92;
+  --sun-color: #f59e0b;
+  --moon-color: #93c5fd;
+  --sky-border: rgba(15, 23, 42, 0.18);
+}
+
+body.themeTransition,
+body.themeTransition .card,
+body.themeTransition .stat,
+body.themeTransition .building,
+body.themeTransition .window,
+body.themeTransition .door,
+body.themeTransition .overlay,
+body.themeTransition .gameOver,
+body.themeTransition .primaryBtn {
+  transition:
+    background-color 5s linear,
+    color 5s linear,
+    border-color 5s linear;
+}
+
+body.themeTransition .sun,
+body.themeTransition .moon {
+  transition:
+    opacity 5s linear,
+    transform 5s linear,
+    background-color 5s linear,
+    border-color 5s linear,
+    box-shadow 5s linear;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.card {
+  width: min(100%, calc(var(--win-size) * 6 + 48px));
+  height: min(96svh, 900px);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.hud {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: calc(var(--win-size) * 6);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stat {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+}
+
+.buildingWrap {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.building {
+  width: calc(var(--win-size) * 3);
+  height: 100%;
+  background: linear-gradient(180deg, var(--building-top), var(--building-bottom));
+  border-radius: 18px 18px 0 0;
+  border: 1px solid var(--card-border);
+  padding: 18px calc((var(--win-size) - var(--win-gap)) / 2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.buildingTitle {
+  margin: 0;
+  padding: 2px 0 4px;
+  text-align: center;
+  font-size: clamp(18px, 2.8svh, 26px);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .buildingTitle {
+    color: color-mix(in srgb, var(--text) 84%, var(--moon-color) 16%);
+  }
+
+  body[data-theme='day'] .buildingTitle {
+    color: color-mix(in srgb, var(--text) 84%, var(--sun-color) 16%);
+    text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 35%, transparent);
+  }
+}
+
+.sky {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(var(--win-size) * 5);
+  display: flex;
+  justify-content: space-between;
+  padding: 40px -40px;
+  pointer-events: none;
+}
+
+.skyIcon {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  border: 1px solid var(--sky-border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.20);
+  margin: 0 -10px;
+}
+
+.sun {
+  opacity: var(--sun-opacity);
+  transform: scale(var(--sun-scale));
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.75), var(--sun-color) 55%, rgba(0, 0, 0, 0.08) 100%);
+}
+
+.moon {
+  opacity: var(--moon-opacity);
+  transform: scale(var(--moon-scale));
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.65), var(--moon-color) 60%, rgba(0, 0, 0, 0.10) 100%),
+    radial-gradient(circle at 65% 40%, rgba(0, 0, 0, 0.18) 0 18%, transparent 19%);
+}
+
+.windowsGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, var(--win-size));
+  grid-auto-rows: var(--win-size);
+  gap: var(--win-gap);
+  justify-content: center;
+  align-content: center;
+  min-height: 0;
+}
+
+.window {
+  position: relative;
+  border-radius: 6px;
+  border: 1px solid var(--window-border);
+  background: var(--window-bg);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  user-select: none;
+  width: var(--win-size);
+  height: var(--win-size);
+}
+
+.window:active {
+  transform: translateY(1px);
+}
+
+.emoji {
+  font-size: clamp(18px, 3.2vw, 22px);
+  line-height: 1;
+}
+
+.doorRow {
+  height: calc(var(--win-size) * 2);
+  display: grid;
+  place-items: center;
+}
+
+.doorSign {
+  margin: 0;
+  align-self: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  .doorSign {
+    border-color: color-mix(in srgb, var(--panel-border) 70%, var(--text) 30%);
+    color: color-mix(in srgb, var(--text) 88%, var(--moon-color) 12%);
+  }
+
+  body[data-theme='day'] .doorSign {
+    color: color-mix(in srgb, var(--text) 88%, var(--sun-color) 12%);
+  }
+}
+
+.door {
+  width: calc(var(--win-size) * 1.2 + var(--win-gap));
+  height: calc(var(--win-size) * 2);
+  border-radius: 14px 14px 0 0;
+  background: var(--door-bg);
+  border: 1px solid var(--door-border);
+  border-bottom: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.door:active {
+  transform: translateY(1px);
+}
+
+.doorHasItem {
+  border-color: color-mix(in srgb, var(--door-border) 40%, var(--text) 60%);
+}
+
+.doorItem {
+  font-size: clamp(18px, 3.2vw, 22px);
+  line-height: 1;
+}
+
+.footer {
+  margin-top: 10px;
+  opacity: 0.9;
+  font-size: 13px;
+  width: 100%;
+  max-width: calc(var(--win-size) * 6);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--overlay-bg);
+  border-radius: 16px;
+}
+
+.gameOver {
+  width: min(520px, 92%);
+  background: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+}
+
+.gameOver h2 {
+  margin: 0 0 8px;
+}
+
+.primaryBtn {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background: var(--btn-bg-hover);
+}

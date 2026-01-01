@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#111827"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="24" fill="url(#g)"/>
+  <rect x="30" y="18" width="68" height="92" rx="10" fill="#0f172a" stroke="rgba(255,255,255,0.12)"/>
+  <g fill="#fde047">
+    <rect x="38" y="28" width="12" height="12" rx="3"/>
+    <rect x="58" y="28" width="12" height="12" rx="3"/>
+    <rect x="78" y="28" width="12" height="12" rx="3"/>
+
+    <rect x="38" y="48" width="12" height="12" rx="3"/>
+    <rect x="58" y="48" width="12" height="12" rx="3"/>
+    <rect x="78" y="48" width="12" height="12" rx="3"/>
+
+    <rect x="38" y="68" width="12" height="12" rx="3"/>
+    <rect x="58" y="68" width="12" height="12" rx="3"/>
+    <rect x="78" y="68" width="12" height="12" rx="3"/>
+  </g>
+  <text x="64" y="116" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="10" fill="rgba(255,255,255,0.7)">PWA</text>
+</svg>
