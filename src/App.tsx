@@ -29,6 +29,9 @@ type DoorDrop = {
   expiresAt: number
 }
 
+type View = 'welcome' | 'instructions' | 'game'
+type InstructionsReturnTo = 'welcome' | 'game'
+
 const COLS = 2
 const ROWS = 5
 const CELL_COUNT = COLS * ROWS
@@ -78,6 +81,9 @@ function pickDoorItem() {
 }
 
 export default function App() {
+  const [view, setView] = useState<View>('welcome')
+  const [instructionsReturnTo, setInstructionsReturnTo] = useState<InstructionsReturnTo>('welcome')
+
   const [grid, setGrid] = useState<WindowCell[]>(() => createInitialGrid())
   const [points, setPoints] = useState(0)
   const [gameOver, setGameOver] = useState(false)
@@ -89,6 +95,7 @@ export default function App() {
   const intervalsRef = useRef<{ spawn?: number; cleanup?: number }>({})
   const timerRef = useRef<number | null>(null)
   const startedAtRef = useRef<number>(Date.now())
+  const pausedAtRef = useRef<number | null>(null)
 
   const bombSeen = useMemo(() => grid.some((c) => c.active?.kind === 'bomb'), [grid])
 
@@ -101,9 +108,38 @@ export default function App() {
     document.body.classList.toggle('themeTransition', isThemeTransitionWindow)
   }, [theme, isThemeTransitionWindow])
 
-  const doorMilestones = Math.floor(points / 100)
+  useEffect(() => {
+    document.body.dataset.view = view
+  }, [view])
 
   useEffect(() => {
+    if (view !== 'game') {
+      if (pausedAtRef.current == null) pausedAtRef.current = Date.now()
+      return
+    }
+
+    const pausedAt = pausedAtRef.current
+    if (pausedAt == null) {
+      startedAtRef.current = Date.now() - elapsedSeconds * 1000
+      return
+    }
+
+    const delta = Date.now() - pausedAt
+    pausedAtRef.current = null
+    startedAtRef.current = Date.now() - elapsedSeconds * 1000
+
+    if (delta > 0) {
+      setDoorDrop((prev) => (prev ? { ...prev, expiresAt: prev.expiresAt + delta } : prev))
+      setGrid((prev) =>
+        prev.map((cell) => (cell.active ? { ...cell, expiresAt: cell.expiresAt + delta } : cell))
+      )
+    }
+  }, [view, elapsedSeconds])
+
+  const doorMilestones = Math.floor(points / 50)
+
+  useEffect(() => {
+    if (view !== 'game') return
     if (gameOver) return
     if (doorMilestones <= 0) return
     if (doorMilestones <= doorMilestonesAwarded) return
@@ -116,9 +152,10 @@ export default function App() {
       points: item.points,
       expiresAt: now + randomIntRange(TTL_MIN_MS, TTL_MAX_MS)
     })
-  }, [doorMilestones, doorMilestonesAwarded, gameOver])
+  }, [doorMilestones, doorMilestonesAwarded, gameOver, view])
 
   useEffect(() => {
+    if (view !== 'game') return
     if (gameOver) return
 
     const spawn = window.setInterval(() => {
@@ -174,7 +211,7 @@ export default function App() {
       window.clearInterval(spawn)
       window.clearInterval(cleanup)
     }
-  }, [gameOver])
+  }, [gameOver, view])
 
   useEffect(() => {
     startedAtRef.current = Date.now()
@@ -183,6 +220,7 @@ export default function App() {
 
   useEffect(() => {
     if (gameOver) return
+    if (view !== 'game') return
 
     const id = window.setInterval(() => {
       const seconds = Math.floor((Date.now() - startedAtRef.current) / 1000)
@@ -195,7 +233,7 @@ export default function App() {
       window.clearInterval(id)
       if (timerRef.current === id) timerRef.current = null
     }
-  }, [gameOver, runKey])
+  }, [gameOver, runKey, view])
 
   function formatHMS(totalSeconds: number) {
     const hours = Math.floor(totalSeconds / 3600)
@@ -244,6 +282,16 @@ export default function App() {
     setRunKey((k) => k + 1)
   }
 
+  function openInstructions(from: InstructionsReturnTo) {
+    setInstructionsReturnTo(from)
+    setView('instructions')
+  }
+
+  function startGame() {
+    restart()
+    setView('game')
+  }
+
   function onClickDoor() {
     if (gameOver) return
 
@@ -261,72 +309,122 @@ export default function App() {
   return (
     <div className="app">
       <div className="card" style={{ position: 'relative' }}>
-        <div className="hud">
-          <div className="stat">
-            <span>Points</span>
-            <strong>{points}</strong>
-          </div>
-          <div className="stat">
-            <span>Time</span>
-            <strong>{formatHMS(elapsedSeconds)}</strong>
-          </div>
-        </div>
-
-        <div className="buildingWrap">
-          <div className="sky" aria-hidden="true">
-            <div className="skyIcon sun" />
-            <div className="skyIcon moon" />
-          </div>
-
-          <div className="building" aria-label="Building">
-            <h1 className="buildingTitle">Hotel</h1>
-            <div className="windowsGrid" aria-label="Windows">
-              {grid.map((cell) => (
-                <div
-                  key={cell.id}
-                  className="window"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={cell.active ? `Window with ${cell.active.emoji}` : 'Empty window'}
-                  onClick={() => onClickWindow(cell.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') onClickWindow(cell.id)
-                  }}
-                >
-                  {cell.active ? <span className="emoji">{cell.active.emoji}</span> : null}
-                </div>
-              ))}
-            </div>
-
-            <h2 className="doorSign">Welcome</h2>
-
-            <div className="doorRow" aria-label="Door">
-              <div
-                className={doorDrop ? 'door doorHasItem' : 'door'}
-                role="button"
-                tabIndex={0}
-                aria-label={doorDrop ? `Door item ${doorDrop.emoji}` : 'Door'}
-                onClick={onClickDoor}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') onClickDoor()
-                }}
-              >
-                {doorDrop ? <span className="doorItem">{doorDrop.emoji}</span> : null}
+        {view === 'welcome' ? (
+          <div className="screen">
+            <div className="screenPanel">
+              <h1 className="buildingTitle">Hotel Emojis</h1>
+              <p className="screenText">Ready to start?</p>
+              <div className="screenActions">
+                <button className="primaryBtn" onClick={() => openInstructions('welcome')}>
+                  Continue
+                </button>
               </div>
             </div>
           </div>
-        </div>
+        ) : null}
 
-        {gameOver ? (
-          <div className="overlay" role="dialog" aria-modal="true" aria-label="Game Over Dialog">
-            <div className="gameOver">
-              <h2>Game Over</h2>
-              <div>Points: <strong>{points}</strong></div>
-              <button className="primaryBtn" onClick={restart}>
-                Restart
-              </button>
+        {view === 'instructions' ? (
+          <div className="screen">
+            <div className="screenPanel">
+              <h1 className="screenTitle">Instructions</h1>
+              <ul className="screenList">
+                <li>Click a window to collect what appears.</li>
+                <li>Avoid the bomb — it ends the game.</li>
+                <li>Day theme adds points; night theme flips points.</li>
+                <li>Sometimes the door drops a bonus item.</li>
+              </ul>
+              <div className="screenActions">
+                {instructionsReturnTo === 'game' ? (
+                  <button className="primaryBtn" onClick={() => setView('game')}>
+                    Back to Game
+                  </button>
+                ) : (
+                  <button className="primaryBtn" onClick={startGame}>
+                    Start Game
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+        ) : null}
+
+        {view === 'game' ? (
+          <>
+            <div className="hud">
+              <div className="stat">
+                <span>Points</span>
+                <strong>{points}</strong>
+              </div>
+              <div className="stat">
+                <span>Time</span>
+                <strong>{formatHMS(elapsedSeconds)}</strong>
+              </div>
+            </div>
+
+            <div className="buildingWrap">
+              <div className="sky" aria-hidden="true">
+                <div className="skyIcon sun" />
+                <div className="skyIcon moon" />
+              </div>
+
+              <div className="building" aria-label="Building">
+                <h1 className="buildingTitle">Hotel</h1>
+                <h2 className="buildingSubTitle">🌞 Emojis 🌝</h2>
+                <div className="windowsGrid" aria-label="Windows">
+                  {grid.map((cell) => (
+                    <div
+                      key={cell.id}
+                      className="window"
+                      role="button"
+                      tabIndex={0}
+                      aria-label={cell.active ? `Window with ${cell.active.emoji}` : 'Empty window'}
+                      onClick={() => onClickWindow(cell.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') onClickWindow(cell.id)
+                      }}
+                    >
+                      {cell.active ? <span className="emoji">{cell.active.emoji}</span> : null}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="doorArea">
+                  <button className="doorSign doorSignBtn" onClick={() => openInstructions('game')}>
+                    Instructions
+                  </button>
+
+                  <div className="doorRow" aria-label="Door">
+                    <div
+                      className={doorDrop ? 'door doorHasItem' : 'door'}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={doorDrop ? `Door item ${doorDrop.emoji}` : 'Door'}
+                      onClick={onClickDoor}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') onClickDoor()
+                      }}
+                    >
+                      {doorDrop ? <span className="doorItem">{doorDrop.emoji}</span> : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {gameOver ? (
+              <div className="overlay" role="dialog" aria-modal="true" aria-label="Game Over Dialog">
+                <div className="gameOver">
+                  <h2>Game Over</h2>
+                  <div>
+                    Points: <strong>{points}</strong>
+                  </div>
+                  <button className="primaryBtn" onClick={restart}>
+                    Restart
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </div>

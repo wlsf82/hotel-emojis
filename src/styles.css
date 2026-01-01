@@ -29,6 +29,28 @@
   --sun-color: #fbbf24;
   --moon-color: #c7d2fe;
   --sky-border: rgba(255, 255, 255, 0.14);
+
+  /* Fixed endpoints for onboarding gradients (reuse existing theme values) */
+  --bg-night: #0b1220;
+  --bg-day: #f8fafc;
+  --card-bg-night: rgba(29, 39, 59, 0.8);
+  --card-bg-day: rgba(255, 255, 255, 0.8);
+
+  /* Onboarding gradient colors (defaults; enhanced via color-mix below) */
+  --onboard-bg-left: var(--bg-day);
+  --onboard-bg-right: var(--bg-night);
+  --onboard-card-left: var(--card-bg-day);
+  --onboard-card-right: var(--card-bg-night);
+}
+
+@supports (color: color-mix(in srgb, black, white)) {
+  :root {
+    /* Silver-style (cool gray) derived from the existing endpoints */
+    --onboard-bg-left: color-mix(in srgb, var(--bg-day) 88%, var(--bg-night) 12%);
+    --onboard-bg-right: color-mix(in srgb, var(--bg-night) 82%, var(--bg-day) 18%);
+    --onboard-card-left: color-mix(in srgb, var(--card-bg-day) 88%, var(--card-bg-night) 12%);
+    --onboard-card-right: color-mix(in srgb, var(--card-bg-night) 82%, var(--card-bg-day) 18%);
+  }
 }
 
 body[data-theme='day'] {
@@ -99,6 +121,11 @@ body {
   overflow: hidden;
 }
 
+body[data-view='welcome'],
+body[data-view='instructions'] {
+  background: var(--onboard-bg-left);
+}
+
 button {
   font: inherit;
 }
@@ -122,6 +149,12 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+body[data-view='welcome'] .card,
+body[data-view='instructions'] .card {
+  background: var(--onboard-card-left);
+  background-image: none;
 }
 
 .hud {
@@ -178,14 +211,33 @@ button {
   text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 55%, transparent);
 }
 
+.buildingSubTitle {
+  margin: -6px 0 4px;
+  text-align: center;
+  font-size: clamp(12px, 1.9svh, 14px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  color: var(--text);
+}
+
 @supports (color: color-mix(in srgb, black, white)) {
   .buildingTitle {
     color: color-mix(in srgb, var(--text) 84%, var(--moon-color) 16%);
   }
 
+  .buildingSubTitle {
+    color: color-mix(in srgb, var(--text) 78%, var(--moon-color) 22%);
+  }
+
   body[data-theme='day'] .buildingTitle {
     color: color-mix(in srgb, var(--text) 84%, var(--sun-color) 16%);
     text-shadow: 0 1px 0 color-mix(in srgb, var(--bg) 35%, transparent);
+  }
+
+  body[data-theme='day'] .buildingSubTitle {
+    color: color-mix(in srgb, var(--text) 78%, var(--sun-color) 22%);
   }
 }
 
@@ -263,6 +315,14 @@ button {
   place-items: center;
 }
 
+.doorArea {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
 .doorSign {
   margin: 0;
   align-self: center;
@@ -275,6 +335,14 @@ button {
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.doorSignBtn {
+  cursor: pointer;
+}
+
+.doorSignBtn:hover {
+  background: color-mix(in srgb, var(--panel-bg) 70%, var(--text) 30%);
 }
 
 @supports (color: color-mix(in srgb, black, white)) {
@@ -354,8 +422,55 @@ button {
   background: var(--btn-bg);
   color: var(--text);
   cursor: pointer;
+  font-weight: 600;
 }
 
 .primaryBtn:hover {
   background: var(--btn-bg-hover);
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.screenPanel {
+  width: min(560px, 100%);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+}
+
+.screenTitle {
+  margin: 0 0 8px;
+  font-size: clamp(18px, 3svh, 26px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.screenText {
+  margin: 0 0 12px;
+  opacity: 0.9;
+}
+
+.screenList {
+  margin: 0;
+  padding-left: 18px;
+  text-align: left;
+  line-height: 1.5;
+}
+
+.screenActions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.screenActions .primaryBtn {
+  margin-top: 0;
 }
