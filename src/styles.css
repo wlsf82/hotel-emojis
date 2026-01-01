@@ -151,6 +151,52 @@ button {
   overflow: hidden;
 }
 
+.fxLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.fxEmoji {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  font-size: clamp(18px, 3.2vw, 26px);
+  opacity: 0;
+  --dx: 0px;
+  --dy: 0px;
+  --rot: 0deg;
+  --delay: 0ms;
+  animation: fxBurst 900ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--delay) both;
+}
+
+@keyframes fxBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      rotate(var(--rot))
+      scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fxLayer {
+    display: none;
+  }
+}
+
 body[data-view='welcome'] .card,
 body[data-view='instructions'] .card {
   background: var(--onboard-card-left);

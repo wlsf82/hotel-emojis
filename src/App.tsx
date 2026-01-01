@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 type EmojiKind = 'good' | 'bad' | 'bomb'
 
@@ -31,6 +31,17 @@ type DoorDrop = {
 
 type View = 'welcome' | 'instructions' | 'game'
 type InstructionsReturnTo = 'welcome' | 'game'
+
+type FxParticle = {
+  id: number
+  emoji: string
+  x: number
+  y: number
+  dx: number
+  dy: number
+  rot: string
+  delayMs: number
+}
 
 const COLS = 2
 const ROWS = 5
@@ -92,10 +103,17 @@ export default function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [runKey, setRunKey] = useState(0)
 
+  const [fxParticles, setFxParticles] = useState<FxParticle[]>([])
+
   const intervalsRef = useRef<{ spawn?: number; cleanup?: number }>({})
   const timerRef = useRef<number | null>(null)
   const startedAtRef = useRef<number>(Date.now())
   const pausedAtRef = useRef<number | null>(null)
+
+  const cardRef = useRef<HTMLDivElement | null>(null)
+  const windowElsRef = useRef<Map<number, HTMLDivElement | null>>(new Map())
+  const doorElRef = useRef<HTMLDivElement | null>(null)
+  const nextFxIdRef = useRef(1)
 
   const bombSeen = useMemo(() => grid.some((c) => c.active?.kind === 'bomb'), [grid])
 
@@ -243,8 +261,59 @@ export default function App() {
     return `${pad2(hours)}:${pad2(minutes)}:${pad2(seconds)}`
   }
 
+  function canAnimateFx() {
+    if (typeof window === 'undefined') return false
+    if (!('matchMedia' in window)) return true
+    return !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
+  function spawnEmojiFireworks(emoji: string, originEl: HTMLElement | null) {
+    if (view !== 'game') return
+    if (!canAnimateFx()) return
+
+    const cardEl = cardRef.current
+    if (!cardEl) return
+
+    const cardRect = cardEl.getBoundingClientRect()
+    const originRect = originEl?.getBoundingClientRect()
+    const ox = originRect ? originRect.left + originRect.width / 2 : cardRect.left + cardRect.width / 2
+    const oy = originRect ? originRect.top + originRect.height / 2 : cardRect.top + cardRect.height / 2
+
+    const x = ox - cardRect.left
+    const y = oy - cardRect.top
+
+    const count = 18
+    const durationMs = 900
+    const ids: number[] = []
+
+    const particles: FxParticle[] = Array.from({ length: count }, () => {
+      const id = nextFxIdRef.current++
+      ids.push(id)
+
+      const angle = Math.random() * Math.PI * 2
+      const distance = randomIntRange(40, 120)
+      const dx = Math.cos(angle) * distance
+      const dy = Math.sin(angle) * distance - randomIntRange(70, 130)
+      const rot = `${randomIntRange(-160, 160)}deg`
+      const delayMs = randomIntRange(0, 120)
+
+      return { id, emoji, x, y, dx, dy, rot, delayMs }
+    })
+
+    setFxParticles((prev) => prev.concat(particles))
+    window.setTimeout(() => {
+      setFxParticles((prev) => prev.filter((p) => !ids.includes(p.id)))
+    }, durationMs + 200)
+  }
+
   function onClickWindow(id: number) {
     if (gameOver) return
+    if (view !== 'game') return
+
+    const pickedNow = grid[id]?.active
+    if (pickedNow && pickedNow.kind !== 'bomb') {
+      spawnEmojiFireworks(pickedNow.emoji, windowElsRef.current.get(id) ?? null)
+    }
 
     setGrid((prev) => {
       const cell = prev[id]
@@ -294,6 +363,11 @@ export default function App() {
 
   function onClickDoor() {
     if (gameOver) return
+    if (view !== 'game') return
+
+    if (doorDrop && doorDrop.expiresAt > Date.now()) {
+      spawnEmojiFireworks(doorDrop.emoji, doorElRef.current)
+    }
 
     const now = Date.now()
     setDoorDrop((prev) => {
@@ -308,7 +382,27 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="card" style={{ position: 'relative' }}>
+      <div className="card" ref={cardRef} style={{ position: 'relative' }}>
+        <div className="fxLayer" aria-hidden="true">
+          {fxParticles.map((p) => {
+            const style =
+              {
+                left: p.x,
+                top: p.y,
+                ['--dx' as any]: `${p.dx}px`,
+                ['--dy' as any]: `${p.dy}px`,
+                ['--rot' as any]: p.rot,
+                ['--delay' as any]: `${p.delayMs}ms`,
+              } satisfies CSSProperties
+
+            return (
+              <span key={p.id} className="fxEmoji" style={style}>
+                {p.emoji}
+              </span>
+            )
+          })}
+        </div>
+
         {view === 'welcome' ? (
           <div className="screen">
             <div className="screenPanel">
@@ -375,6 +469,9 @@ export default function App() {
                     <div
                       key={cell.id}
                       className="window"
+                      ref={(el) => {
+                        windowElsRef.current.set(cell.id, el)
+                      }}
                       role="button"
                       tabIndex={0}
                       aria-label={cell.active ? `Window with ${cell.active.emoji}` : 'Empty window'}
@@ -396,6 +493,7 @@ export default function App() {
                   <div className="doorRow" aria-label="Door">
                     <div
                       className={doorDrop ? 'door doorHasItem' : 'door'}
+                      ref={doorElRef}
                       role="button"
                       tabIndex={0}
                       aria-label={doorDrop ? `Door item ${doorDrop.emoji}` : 'Door'}
