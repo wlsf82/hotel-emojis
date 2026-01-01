@@ -126,6 +126,11 @@ body[data-view='instructions'] {
   background: var(--onboard-bg-left);
 }
 
+body[data-theme='night'][data-view='welcome'],
+body[data-theme='night'][data-view='instructions'] {
+  background: var(--onboard-bg-right);
+}
+
 button {
   font: inherit;
 }
@@ -201,6 +206,11 @@ body[data-view='welcome'] .card,
 body[data-view='instructions'] .card {
   background: var(--onboard-card-left);
   background-image: none;
+}
+
+body[data-theme='night'][data-view='welcome'] .card,
+body[data-theme='night'][data-view='instructions'] .card {
+  background: var(--onboard-card-right);
 }
 
 .hud {
