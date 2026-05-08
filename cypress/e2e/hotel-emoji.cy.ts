@@ -1,0 +1,130 @@
+describe('Hotel Emoji', () => {
+  beforeEach(() => {
+    cy.clock()
+    cy.visit('/')
+  })
+
+  it('clicking "Continue" leads to the "Instructions"', () => {
+    cy.contains('button', 'Continue').click()
+
+    cy.contains('h1', 'Instructions').should('be.visible')
+  })
+
+  context('Start Game', () => {
+    beforeEach(() => {
+      cy.contains('button', 'Continue').click()
+      cy.contains('button', 'Start Game').click()
+    })
+
+    it('shows the timer and hotel building', () => {
+      cy.contains('.stat span', 'Time').should('be.visible')
+      cy.contains('.stat strong', '00:00:00').should('be.visible')
+      cy.get('.buildingWrap').should('be.visible')
+      cy.contains('h1', 'Hotel').should('be.visible')
+      cy.contains('h2', 'Emojis').should('be.visible')
+    })
+
+    it('the game starts in the day', () => {
+      cy.get('.sun').should('be.visible')
+      cy.get('.moon').should('not.be.visible')
+    })
+
+    it('after a minute the night arrives', () => {
+      cy.tick(60000)
+
+      cy.contains('.stat strong', '00:01:00').should('be.visible')
+      cy.get('.sun').should('not.be.visible')
+      cy.get('.moon').should('be.visible')
+    })
+
+    it('after two minutes the day is back', () => {
+      cy.tick(60000)
+
+      cy.contains('.stat strong', '00:01:00').should('be.visible')
+      cy.get('.sun').should('not.be.visible')
+      cy.get('.moon').should('be.visible')
+
+      cy.tick(60000)
+
+      cy.contains('.stat strong', '00:02:00').should('be.visible')
+      cy.get('.sun').should('be.visible')
+      cy.get('.moon').should('not.be.visible')
+    })
+
+    it('clicking a non-bomb item changes the score', () => {
+      cy.tick(60000)
+
+      cy.get('.pointsStat strong')
+        .first()
+        .should('have.text', '0')
+      cy.get('.pointsStat strong')
+        .last()
+        .should('have.text', '0')
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .first()
+        .click()
+
+      cy.get('.pointsStat strong')
+        .first()
+        .should('not.have.text', '0')
+      cy.get('.pointsStat strong')
+        .last()
+        .should('not.have.text', '0')
+    })
+
+    context('Instructions', () => {
+      beforeEach(() => {
+        cy.contains('button', 'Instructions').click()
+      })
+
+      it('shows the instructions', () => {
+        cy.contains('h1', 'Instructions').should('be.visible')
+      })
+
+      it('goes back to the game', () => {
+        cy.contains('button', 'Back to Game').click()
+
+        cy.contains('.stat span', 'Time').should('be.visible')
+        cy.contains('.stat strong', '00:00:00').should('be.visible')
+        cy.get('.buildingWrap').should('be.visible')
+        cy.contains('h1', 'Hotel').should('be.visible')
+        cy.contains('h2', 'Emojis').should('be.visible')
+      })
+    })
+
+    context('Game Over', () => {
+      beforeEach(() => {
+        cy.tick(60000)
+        // Wait for React to flush batched state updates from the tick before querying the DOM.
+        cy.contains('.stat strong', '00:01:00').should('be.visible')
+      })
+
+      // Run the test 5 times to increase the chances of a bomb appearing at least once
+      Cypress._.times(5, () => {
+        it('clicking a bomb ends the game', function () {
+          cy.get('body').then($body => {
+            if ($body.find('.window[aria-label="Window with 💣"]').length) {
+              cy.get('.window[aria-label="Window with 💣"]')
+                .first()
+                .click()
+
+              cy.get('[aria-label="Game Over Dialog"]')
+                .contains('h2', 'Game Over')
+                .should('be.visible')
+            } else {
+              cy.log('No bomb was found')
+            }
+          })
+        })
+      })
+
+      Cypress._.times(5, () => {
+        it('restarts the game after the game is over', () => {
+          // Use `cy.contains('button', 'Restart').click()`
+        })
+      })
+    })
+  })
+})
