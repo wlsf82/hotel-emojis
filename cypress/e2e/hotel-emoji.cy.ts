@@ -246,6 +246,7 @@ describe('Hotel Emojis - Game Simulations', () => {
               doorItemFound = true
             } else {
               cy.log('No door item was found')
+              // Retry: conditions not met yet, so recurse with one fewer attempt
               clickPositiveDayItem(remainingAttempts - 1)
             }
           })
