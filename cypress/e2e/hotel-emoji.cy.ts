@@ -74,6 +74,106 @@ describe('Hotel Emojis', () => {
         .should('not.have.text', '0')
     })
 
+    it('"Good" items score positively during the day (i.e., 🌟, ✨, 🎉, 💎, 🍀, ⭐️, ❤️)', () => {
+      cy.tick(40000)
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .not('[aria-label="Window with 💀"]')
+        .not('[aria-label="Window with 🫠"]')
+        .not('[aria-label="Window with 😭"]')
+        .not('[aria-label="Window with 🧟‍♂️"]')
+        .not('[aria-label="Window with 🪳"]')
+        .not('[aria-label="Window with 🕷️"]')
+        .not('[aria-label="Window with 🔥"]')
+        .not('[aria-label="Empty window"]')
+        .first()
+        .click()
+
+      cy.get('.pointsStat strong')
+        .last()
+        .invoke('text')
+        .then(pointsText => {
+          const points = parseInt(pointsText, 10)
+          expect(points).to.be.greaterThan(0)
+        })
+    })
+
+    it('"Bad" items score negatively during the day (i.e., 💀, 🫠, 😭, 🧟‍♂️, 🪳, 🕷️, 🔥)', () => {
+      cy.tick(40000)
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .not('[aria-label="Window with 🌟"]')
+        .not('[aria-label="Window with ✨"]')
+        .not('[aria-label="Window with 🎉"]')
+        .not('[aria-label="Window with 💎"]')
+        .not('[aria-label="Window with 🍀"]')
+        .not('[aria-label="Window with ⭐️"]')
+        .not('[aria-label="Window with ❤️"]')
+        .not('[aria-label="Empty window"]')
+        .first()
+        .click()
+
+      cy.get('.pointsStat strong')
+        .last()
+        .invoke('text')
+        .then(pointsText => {
+          const points = parseInt(pointsText, 10)
+          expect(points).to.be.lessThan(0)
+        })
+    })
+
+    it('"Bad" items score positively at night (i.e., 💀, 🫠, 😭, 🧟‍♂️, 🪳, 🕷️, 🔥)', () => {
+      cy.tick(60000)
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .not('[aria-label="Window with 🌟"]')
+        .not('[aria-label="Window with ✨"]')
+        .not('[aria-label="Window with 🎉"]')
+        .not('[aria-label="Window with 💎"]')
+        .not('[aria-label="Window with 🍀"]')
+        .not('[aria-label="Window with ⭐️"]')
+        .not('[aria-label="Window with ❤️"]')
+        .not('[aria-label="Empty window"]')
+        .first()
+        .click()
+
+      cy.get('.pointsStat strong')
+        .last()
+        .invoke('text')
+        .then(pointsText => {
+          const points = parseInt(pointsText, 10)
+          expect(points).to.be.greaterThan(0)
+        })
+    })
+
+    it('"Good" items score negatively at night (i.e., 🌟, ✨, 🎉, 💎, 🍀, ⭐️, ❤️)', () => {
+      cy.tick(60000)
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .not('[aria-label="Window with 💀"]')
+        .not('[aria-label="Window with 🫠"]')
+        .not('[aria-label="Window with 😭"]')
+        .not('[aria-label="Window with 🧟‍♂️"]')
+        .not('[aria-label="Window with 🪳"]')
+        .not('[aria-label="Window with 🕷️"]')
+        .not('[aria-label="Window with 🔥"]')
+        .not('[aria-label="Empty window"]')
+        .first()
+        .click()
+
+      cy.get('.pointsStat strong')
+        .last()
+        .invoke('text')
+        .then(pointsText => {
+          const points = parseInt(pointsText, 10)
+          expect(points).to.be.lessThan(0)
+        })
+    })
+
     context('Instructions', () => {
       beforeEach(() => {
         cy.contains('button', 'Instructions').click()
@@ -154,50 +254,6 @@ describe('Hotel Emojis - Game Simulations', () => {
     cy.visit('/')
     cy.contains('button', 'Continue').click()
     cy.contains('button', 'Start Game').click()
-  })
-
-  it('scores positively during the day by collecting positive items (i.e., 🌟, ✨, 🎉, 💎, 🍀, ⭐️, ❤️)', () => {
-    cy.get('.window')
-      .not('[aria-label="Window with 💣"]')
-      .not('[aria-label="Window with 💀"]')
-      .not('[aria-label="Window with 🫠"]')
-      .not('[aria-label="Window with 😭"]')
-      .not('[aria-label="Window with 🧟‍♂️"]')
-      .not('[aria-label="Window with 🪳"]')
-      .not('[aria-label="Window with 🕷️"]')
-      .not('[aria-label="Window with 🔥"]')
-      .not('[aria-label="Empty window"]')
-      .click({ multiple: true })
-
-    cy.get('.pointsStat strong')
-      .last()
-      .invoke('text')
-      .then(pointsText => {
-        const points = parseInt(pointsText, 10)
-        expect(points).to.be.greaterThan(0)
-      })
-  })
-
-  it('scores negatively during the day by collecting negative items (i.e., 💀, 🫠, 😭, 🧟‍♂️, 🪳, 🕷️, 🔥)', () => {
-    cy.get('.window')
-      .not('[aria-label="Window with 💣"]')
-      .not('[aria-label="Window with 🌟"]')
-      .not('[aria-label="Window with ✨"]')
-      .not('[aria-label="Window with 🎉"]')
-      .not('[aria-label="Window with 💎"]')
-      .not('[aria-label="Window with 🍀"]')
-      .not('[aria-label="Window with ⭐️"]')
-      .not('[aria-label="Window with ❤️"]')
-      .not('[aria-label="Empty window"]')
-      .click({ multiple: true })
-
-    cy.get('.pointsStat strong')
-      .last()
-      .invoke('text')
-      .then(pointsText => {
-        const points = parseInt(pointsText, 10)
-        expect(points).to.be.lessThan(0)
-      })
   })
 
   it('shows an item at the hotel\'s door when the score reaches 50 or more, and collecting it changes the score', () => {
