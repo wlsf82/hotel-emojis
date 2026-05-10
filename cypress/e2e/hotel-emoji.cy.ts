@@ -1,4 +1,4 @@
-describe('Hotel Emoji', () => {
+describe('Hotel Emojis', () => {
   beforeEach(() => {
     cy.clock()
     cy.visit('/')
@@ -149,7 +149,7 @@ describe('Hotel Emoji', () => {
   })
 })
 
-describe('Hotel Emoji - Game Simulations', () => {
+describe('Hotel Emojis - Game Simulations', () => {
   beforeEach(() => {
     cy.visit('/')
     cy.contains('button', 'Continue').click()
