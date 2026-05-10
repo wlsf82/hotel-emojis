@@ -148,3 +148,112 @@ describe('Hotel Emoji', () => {
     })
   })
 })
+
+describe('Hotel Emoji - Game Simulations', () => {
+  beforeEach(() => {
+    cy.visit('/')
+    cy.contains('button', 'Continue').click()
+    cy.contains('button', 'Start Game').click()
+  })
+
+  it('scores positively during the day by collecting positive items (i.e., 🌟, ✨, 🎉, 💎, 🍀, ⭐️, ❤️)', () => {
+    cy.get('.window')
+      .not('[aria-label="Window with 💣"]')
+      .not('[aria-label="Window with 💀"]')
+      .not('[aria-label="Window with 🫠"]')
+      .not('[aria-label="Window with 😭"]')
+      .not('[aria-label="Window with 🧟‍♂️"]')
+      .not('[aria-label="Window with 🪳"]')
+      .not('[aria-label="Window with 🕷️"]')
+      .not('[aria-label="Window with 🔥"]')
+      .not('[aria-label="Empty window"]')
+      .click({ multiple: true })
+
+    cy.get('.pointsStat strong')
+      .last()
+      .invoke('text')
+      .then(pointsText => {
+        const points = parseInt(pointsText, 10)
+        expect(points).to.be.greaterThan(0)
+      })
+  })
+
+  it('scores negatively during the day by collecting negative items (i.e., 💀, 🫠, 😭, 🧟‍♂️, 🪳, 🕷️, 🔥)', () => {
+    cy.get('.window')
+      .not('[aria-label="Window with 💣"]')
+      .not('[aria-label="Window with 🌟"]')
+      .not('[aria-label="Window with ✨"]')
+      .not('[aria-label="Window with 🎉"]')
+      .not('[aria-label="Window with 💎"]')
+      .not('[aria-label="Window with 🍀"]')
+      .not('[aria-label="Window with ⭐️"]')
+      .not('[aria-label="Window with ❤️"]')
+      .not('[aria-label="Empty window"]')
+      .click({ multiple: true })
+
+    cy.get('.pointsStat strong')
+      .last()
+      .invoke('text')
+      .then(pointsText => {
+        const points = parseInt(pointsText, 10)
+        expect(points).to.be.lessThan(0)
+      })
+  })
+
+  it('shows an item at the hotel\'s door when the score reaches 50 or more, and collecting it changes the score', () => {
+    let doorItemFound = false
+    let iterations = 0
+
+    // Click non-bomb items until we reach 50 points
+    const clickPositiveDayItem = (remainingAttempts: number) => {
+      if (remainingAttempts === 0 || doorItemFound) return
+      iterations++
+
+      cy.get('.window')
+        .not('[aria-label="Window with 💣"]')
+        .not('[aria-label="Window with 💀"]')
+        .not('[aria-label="Window with 🫠"]')
+        .not('[aria-label="Window with 😭"]')
+        .not('[aria-label="Window with 🧟‍♂️"]')
+        .not('[aria-label="Window with 🪳"]')
+        .not('[aria-label="Window with 🕷️"]')
+        .not('[aria-label="Window with 🔥"]')
+        .not('[aria-label="Empty window"]')
+        .click({ multiple: true })
+      // Wait for the score to update and the next items to appear
+      cy.wait(500, { log: false })
+
+      cy.get('.pointsStat strong')
+        .last()
+        .invoke('text')
+        .then(pointsText => {
+          const points = parseInt(pointsText, 10)
+          cy.get('body').then($body => {
+            if (points >= 50 && $body.find('.door.doorHasItem').length) {
+              cy.log(`A door item was found after ${iterations} iteration(s).`)
+              cy.get('.door.doorHasItem')
+                .should('exist')
+                .click()
+              cy.get('.door.doorHasItem')
+                .should('not.exist')
+              cy.get('.pointsStat strong')
+                .last()
+                .invoke('text')
+                .then(pointsText => {
+                  const pointsAfterCollectingDoorItem = parseInt(pointsText, 10)
+                  expect(pointsAfterCollectingDoorItem).not.equal(points)
+                })
+              doorItemFound = true
+            } else {
+              cy.log('No door item was found')
+              clickPositiveDayItem(remainingAttempts - 1)
+            }
+          })
+        })
+    }
+
+    // Start the recursive clicking with a maximum of 30 attempts to avoid an infinite loop
+    // and give enough chances for the door item to appear
+    clickPositiveDayItem(30)
+  })
+})
