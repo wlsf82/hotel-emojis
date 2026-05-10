@@ -257,4 +257,27 @@ describe('Hotel Emojis - Game Simulations', () => {
     // and give enough chances for the door item to appear
     clickPositiveDayItem(30)
   })
+
+  it('pauses the game when the "Instructions" button is clicked, and resuming the game continues the timer', () => {
+    // The timer should show 00:00:00 since the game just started
+    cy.contains('.stat strong', '00:00:00').should('be.visible')
+
+    // Go to the instructions, which should pause the game
+    cy.contains('button', 'Instructions').click()
+    cy.contains('h1', 'Instructions').should('be.visible')
+
+    // Wait for 2 seconds in real time while the game is paused
+    cy.wait(2000)
+
+    // Go back to the game
+    cy.contains('button', 'Back to Game').click()
+    // The timer should still show 00:00:00 since the game was paused
+    cy.contains('.stat strong', '00:00:00').should('be.visible')
+
+    // Wait for another 1 second in real time after resuming the game
+    cy.wait(1000)
+
+    // The timer should now show 00:00:01 since the game has resumed
+    cy.contains('.stat strong', '00:00:01').should('be.visible')
+  })
 })
